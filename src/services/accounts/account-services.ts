@@ -1,38 +1,24 @@
 import axios from "axios";
 import {APP_ENV} from "../../env/config.ts"
-import type {IUserCreate} from "../../interfaces/Auth/IUserCreate.ts";
-import type {IUserEdit} from "../../interfaces/Auth/IUserEdit.ts";
-import type {ILogin} from "../../interfaces/Auth/ILogin.ts";
-import type {IUser} from "../../interfaces/Auth/IUser.ts";
+import type {IUserCreate} from "../../interfaces/User/IUserCreate.ts";
+import type {IUserEdit} from "../../interfaces/User/IUserEdit.ts";
+import type {ILogin} from "../../interfaces/User/ILogin.ts";
 import { jwtDecode } from "jwt-decode";
-import {AuthUserActionType} from "../../interfaces/Auth/IAuthUser.ts";
-import type {IUserRegistration} from "../../interfaces/Auth/IUserRegistration.ts";
-import type {IUserGet} from "../../interfaces/Auth/IUserGet.ts";
+import type {IUserRegistration} from "../../interfaces/User/IUserRegistration.ts";
+import { IUser } from "../../interfaces/User/IUser.ts";
+import { AuthUserActionType } from "../../interfaces/User/IAuthUser.ts";
+import { IAccountResult } from "../../interfaces/User/IAccountResult.tsx";
 
 
 const baseUrl = APP_ENV.BASE_URL;
 
 // Створюємо екземпляр axios
 const instance = axios.create({
-    baseURL: `${baseUrl}/api/AccountControllers`,
+    baseURL: `${baseUrl}/api/Account`,
     headers: {
         "Content-Type": "application/json"
     }
 });
-
-// Інтерцептор для додавання токену до заголовків
-instance.interceptors.request.use(
-    (config) => {
-        const token = getToken();
-        if (token) {
-            config.headers["Authorization"] = "Bearer " + token;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
 // Інтерцептор для обробки помилок і оновлення токену
 instance.interceptors.response.use(
@@ -77,11 +63,12 @@ export async function refreshToken() {
     try {
         const localToken = getToken();
         if (localToken) {
+            
             const response = await instance.put("/refresh-token", {
                 token: getToken(),
             });
-            const token = response.data;
-            setToken(response.data);
+            const token = response.data.token;
+            setToken(response.data.token);
             return token;
         }
     } catch (error)
@@ -98,13 +85,14 @@ export async function login(_user: ILogin, dispatch: any) {
         dispatch({
             type: AuthUserActionType.LOGIN_USER,
             payload: {
-                Id: user.id,
-                Email: user.email,
-                FirstName: user.firstName,
-                LastName: user.lastName,
-                Role: user.role,
-                BankId: user.bankId,
-                RegionId: user.regionId
+                Id: user.Id,
+                Email: user.Email,
+                FirstName: user.FirstName,
+                LastName: user.LastName,
+                Roles: user.Roles,
+                BankName: user.bankName,
+                RegionName: user.regionName,
+                PhoneNumber: user.PhoneNumber,
             } as IUser,
         });
         await setToken(token);
@@ -162,12 +150,13 @@ export async function editUser(model: IUserEdit) {
 export async function getUsersByPage(page: number) {
     const token = localStorage.getItem('token');
     try {
-        const resp = await instance.get<IUserGet[]>(`UsersByPage/${page}`, {
+        const resp = await instance.get<IAccountResult>(`UsersByPage/${page}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
         })
-        return resp.data;
+        
+        return resp.data.users;
     } catch (error) {
         console.error('Failed to fetch users data:', error);
         throw error;
@@ -177,7 +166,7 @@ export async function getUsersByPage(page: number) {
 export async function GetUserById(id: string) {
     const token = localStorage.getItem('token');
     try {
-        const resp = await instance.get<IUserGet>(`GetUserById/${id}`, {
+        const resp = await instance.get<IAccountResult>(`GetUserById/${id}`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },
@@ -218,6 +207,27 @@ export async function deleteUserByID(id: string) {
     }
 }
 
+// Функція перевірки простроченості токена
+function isTokenExpired(token: string) {
+  try {
+    const decoded = jwtDecode<{ exp?: number }>(token);
+    if (!decoded.exp) {
+      // Якщо немає exp, вважаємо токен простроченим або невалідним
+      return true;
+    }
+    const currentTime = Date.now() / 1000;
+    return decoded.exp < currentTime;
+  } catch {
+    return true; // якщо не валідний — вважай простроченим
+  }
+}
 
-
-
+export function checkTokenAndLogoutIfExpired() {
+  const token = localStorage.getItem('token');
+  if (token && isTokenExpired(token)) {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+    return true;  // токен прострочений
+  }
+  return false;  // токен валідний або відсутній
+}

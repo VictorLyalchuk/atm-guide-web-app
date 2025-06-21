@@ -1,11 +1,11 @@
 export interface IUserCreate{
     email: string;
-    password: string;
+    login: string;
     firstName: string;
     lastName: string;
     role: string;
     imagePath?:string;
-    bankId?: number | null;
-    regionId?: number | null;
+    bankId?: string;
+    regionId?: string;
     phoneNumber?: string;
 }
