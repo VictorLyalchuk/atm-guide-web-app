@@ -293,7 +293,7 @@ const EditUser = () => {
                                                                         ))}
                                                                     </TextField>
                                                                     {errors.bankId ? (
-                                                                        <div className="h-6 text-xs text-red-500">Error: {errors.bankId}</div>
+                                                                        <div className="h-6 text-xs text-red-500">Помилка: {errors.bankId}</div>
                                                                     ) : (<div className="h-6 text-xs "> </div>)}
                                                                 </FormControl>
                                                             </div>
@@ -321,7 +321,7 @@ const EditUser = () => {
                                                                         ))}
                                                                     </TextField>
                                                                     {errors.bankId ? (
-                                                                        <div className="h-6 text-xs text-red-500">Error: {errors.bankId}</div>
+                                                                        <div className="h-6 text-xs text-red-500">Помилка: {errors.bankId}</div>
                                                                     ) : (<div className="h-6 text-xs "> </div>)}
                                                                 </FormControl>
                                                             </div>
