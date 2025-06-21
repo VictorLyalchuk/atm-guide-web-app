@@ -1,0 +1,43 @@
+import React from 'react';
+import { FormControl, MenuItem, TextField } from '@mui/material';
+import { Role } from '../constants/roles';
+
+
+interface RoleSelectProps {
+    rolesList: Role[];
+    selectedRole: Role | null;
+    handleRoleChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+    errors: { role?: string };
+}
+
+const RoleSelect: React.FC<RoleSelectProps> = ({
+    rolesList,
+    selectedRole,
+    handleRoleChange,
+    errors,
+}) => {
+    return (
+        <FormControl fullWidth>
+            <TextField
+                variant="standard"
+                id="RoleID"
+                name="RoleID"
+                select
+                value={selectedRole?.id ?? ''}
+                onChange={handleRoleChange}
+                error={!!errors.role}
+            >
+                {rolesList.map(role => (
+                    <MenuItem key={role.id} value={role.id}>
+                        {role.name}
+                    </MenuItem>
+                ))}
+            </TextField>
+            {errors.role ? (
+                <div className="h-6 text-xs text-red-500">Помилка: {errors.role}</div>
+            ) : (<div className="h-6 text-xs "> </div>)}
+        </FormControl>
+    );
+};
+
+export default RoleSelect;
